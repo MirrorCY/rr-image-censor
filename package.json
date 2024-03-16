@@ -1,13 +1,17 @@
 {
   "name": "koishi-plugin-rr-image-censor",
   "description": "人人计划，图像审核服务。",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
     "lib",
     "dist"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MirrorCY/rr-image-censor.git"
+  },
   "homepage": "https://forum.koishi.xyz/t/topic/117",
   "author": "42 <42@koishi.chat>",
   "contributors": [
