@@ -1,7 +1,7 @@
 {
   "name": "koishi-plugin-rr-image-censor",
   "description": "人人计划，图像审核服务。",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
@@ -18,9 +18,6 @@
     "42 <42@koishi.chat>"
   ],
   "license": "MIT",
-  "scripts": {
-    "build": "atsc -b"
-  },
   "keywords": [
     "chatbot",
     "koishi",
