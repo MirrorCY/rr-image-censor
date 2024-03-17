@@ -53,7 +53,7 @@ export function apply(ctx: Context, config: Config) {
 export const Config: Schema<Config> = Schema.object({
   debug: Schema.boolean().description('调试模式，打印每张图的评分到日志。').default(false),
   offset: Schema.number().description('审核强度整体偏移量。').default(-0.016).max(1.0).min(-1.0),
-  threshold: Schema.array(Schema.number()).default(Array(17).fill(0)).collapse().experimental().description('每个分类的阈值微调。')
+  threshold: Schema.array(Schema.number()).default(Array(17).fill(0.0)).collapse().experimental().description('每个分类的阈值微调。').min(17).max(17)
 })
 
 export interface Config {
