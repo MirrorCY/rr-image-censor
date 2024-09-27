@@ -1,7 +1,7 @@
 {
   "name": "koishi-plugin-rr-image-censor",
   "description": "人人计划，图像审核服务。",
-  "version": "2.4.1",
+  "version": "2.4.2",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
@@ -25,9 +25,9 @@
     "plugin"
   ],
   "peerDependencies": {
-    "koishi": "^4.17.2"
+    "koishi": "^4.18.0"
   },
-  "dependencies": {
-    "@koishijs/censor": "^1.0.2"
+  "devDependencies": {
+    "@koishijs/censor": "^1.1.0"
   }
 }

@@ -1,4 +1,4 @@
-import { Context, Dict, h, Logger, Schema } from 'koishi'
+import { Context, Dict, h, Schema } from 'koishi'
 import Censor from '@koishijs/censor'
 
 export const name = 'rr-image-censor'
@@ -27,7 +27,6 @@ export const usage = `
 
 <span class="rotationStar">⭐</span>人人计划图像审核插件，使用教程请点击[插件主页](https://forum.koishi.xyz/t/topic/117?u=mirrorcy)哦<span class="rotationStar">⭐</span>
 `
-const logger = new Logger(name)
 
 export function apply(ctx: Context, config: Config) {
   ctx.plugin(Censor)
@@ -37,11 +36,11 @@ export function apply(ctx: Context, config: Config) {
       attrs.src ||= attrs.url
       const base64 = Buffer.from((await ctx.http.file(attrs.src)).data).toString('base64')
       const data: NsfwCheck = { image: base64 }
-      const { concept_scores } = await ctx.http.post('http://api.t4wefan.pub:51317/check_safety', data)
-        .catch((e) => { logger.error(e) }) as ReviewResult // 草 写的好丑
+      const { concept_scores } = await ctx.http.post('https://censor.elchapo.cn/check_safety', data)
+        .catch((e) => { ctx.logger.error(e) }) as ReviewResult
       if (!concept_scores) return h.image(attrs.url)
       const unsafe = concept_scores.some((score, i) => score + config.offset > config.threshold[i])
-      if (config.debug) logger.info(`Got an image with scores: \n${concept_scores.join('\n')}`)
+      if (config.debug) ctx.logger.info(`Got an image with scores: \n${concept_scores.join('\n')}`)
       if (!unsafe) return h.image(attrs.src)
       return h.i18n('rr-image-censor.detected_unsafe_images')
     }
