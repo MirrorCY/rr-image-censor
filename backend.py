@@ -16,6 +16,17 @@ from PIL import Image
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+def resize_image(image, max_size=640):
+    width, height = image.size
+    if width <= max_size and height <= max_size:
+        return image
+    
+    scale = max_size / max(width, height)
+    new_width = int(width * scale)
+    new_height = int(height * scale)
+    
+    return image.resize((new_width, new_height), Image.LANCZOS)
+
 @torch.compile
 def cosine_distance(image_embeds, text_embeds):
     normalized_image_embeds = nn.functional.normalize(image_embeds.to(device))
@@ -72,6 +83,7 @@ class ReviewResult(BaseModel):
 @app.post("/check_safety")
 def check_safety(data: NsfwCheck):
     image = Image.open(io.BytesIO(base64.b64decode(data.image))).convert("RGB")
+    image = resize_image(image, max_size=640)
     safety_checker_input = safety_feature_extractor(image, return_tensors="pt")
     concept_scores = safety_checker(clip_input=safety_checker_input.pixel_values)
     concept_scores = concept_scores.cpu().numpy()[0].tolist()
