@@ -37,10 +37,14 @@ export function apply(ctx: Context, config: Config) {
       attrs.src ||= attrs.url
       const base64 = Buffer.from((await ctx.http.file(attrs.src)).data).toString('base64')
       const data: NsfwCheck = { image: base64 }
-      const { concept_scores } = await ctx.http.post('https://censor.elchapo.cn/check_safety', data)
-        .catch((e) => { ctx.logger.error(e) }) as ReviewResult
-      if (!concept_scores) return h.image(attrs.url)
-      const unsafe = concept_scores.some((score, i) => score + config.offset > config.threshold[i])
+      const response = await ctx.http.post<ReviewResult>('https://censor.elchapo.cn/check_safety', data)
+        .catch((e) => { 
+          ctx.logger.error(e)
+          return null
+        })
+      if (!response || !response.concept_scores) return h.image(attrs.url)
+      const concept_scores = response.concept_scores
+      const unsafe = concept_scores.some((score: number, i: number) => score + config.offset > config.threshold[i])
       if (config.debug) ctx.logger.info(`Got an image with scores: \n${concept_scores.join('\n')}`)
       if (!unsafe) return h.image(attrs.src)
       return h.i18n('rr-image-censor.detected_unsafe_images')
