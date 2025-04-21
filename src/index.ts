@@ -50,34 +50,60 @@ export function apply(ctx: Context, config: Config) {
       async image(attrs) { return await censor(attrs) }
     })
 
-    let _disposeMiddleware: () => void
-    if (config.censorAll) {
-      _disposeMiddleware = ctx.before('send', async (session) => {
+    let _disposeSendMiddleware: () => void
+    if (config.censorSend) {
+      _disposeSendMiddleware = ctx.before('send', async (session) => {
         const raw = session.elements
         session.elements = await h.transformAsync(raw, { image: censor, img: censor }, session)
         if (JSON.stringify(raw) !== JSON.stringify(session.elements)) ctx.logger.info("阻止了一张图片的发送", raw)
       })
     }
 
+    let _disposeReceiveMiddleware: () => void
+    if (config.censorMessage) {
+      _disposeReceiveMiddleware = ctx.on('message', async (session) => {
+        const raw = session.elements
+        if (!config.scope.includes(session.channelId)) return
+        session.elements = await h.transformAsync(raw, { image: censor, img: censor }, session)
+        if (JSON.stringify(raw) !== JSON.stringify(session.elements)) {
+          session.bot.deleteMessage(session.channelId, session.messageId)
+          session.send(h.i18n('rr-image-censor.detected_unsafe_images'))
+        }
+      })
+    }
+
     ctx.on("dispose", () => {
       _disposeService()
-      if (config.censorAll) _disposeMiddleware()
+      if (config.censorSend) _disposeSendMiddleware()
+      if (config.censorMessage) _disposeReceiveMiddleware()
     })
   })
 }
 
-export const Config: Schema<Config> = Schema.object({
-  debug: Schema.boolean().description('调试模式，打印每张图的评分到日志。').default(false),
-  offset: Schema.number().description('审核强度整体偏移量。').default(-0.016).max(1.0).min(-1.0),
-  threshold: Schema.array(Schema.number()).default(Array(17).fill(0.0)).collapse().experimental().description('每个分类的阈值微调。').min(17).max(17),
-  censorAll: Schema.boolean().description('作用于所有发出图片？').default(false)
-})
+export const Config: Schema<Config> = Schema.intersect([
+  Schema.object({
+    debug: Schema.boolean().description('调试模式，打印每张图的评分到日志。').default(false),
+    offset: Schema.number().description('审核强度整体偏移量。').default(-0.016).max(1.0).min(-1.0),
+    threshold: Schema.array(Schema.number()).default(Array(17).fill(0.0)).collapse().experimental().description('每个分类的阈值微调。').min(17).max(17),
+    censorSend: Schema.boolean().description('作用于所有发出图片？').default(false),
+    censorMessage: Schema.boolean().description('主动撤回违规图片？').default(false),
+  }).description('基础配置'),
+  Schema.union([
+    Schema.object({
+      censorMessage: Schema.const(true).required(),
+      scope: Schema.array(String).description('哪些群主动撤回').default([]),
+    }).description('撤回设置'),
+    Schema.object({})
+  ])
+])
 
 export interface Config {
   debug?: boolean
   offset?: number
   threshold?: number[]
-  censorAll?: boolean
+  censorSend?: boolean
+  censorMessage?: boolean
+  scope?: string[]
 }
 export interface NsfwCheck {
   image: string
